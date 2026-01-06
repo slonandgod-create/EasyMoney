@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EasyMoney UA</title>
+    <style>
+        :root {
+            --primary: #00e676; 
+            --bg: #121212;
+            --card: #1e1e1e;
+            --text: #ffffff;
+            --gray: #b0b0b0;
+            --nav-bg: #1a1a1a;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding-bottom: 80px; 
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 { font-size: 22px; font-weight: 800; margin: 10px 0 20px; }
+        .balance-card {
+            background: linear-gradient(135deg, #1b5e20, #00c853);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 25px rgba(0, 200, 83, 0.2);
+        }
+        .balance-title { font-size: 12px; text-transform: uppercase; opacity: 0.8; }
+        .balance-amount { font-size: 40px; font-weight: 800; margin: 5px 0; }
+
+        .task-item {
+            background: var(--card); padding: 15px; border-radius: 16px; margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid #333;
+        }
+        .task-name { font-weight: 600; font-size: 14px; }
+        .task-reward { font-size: 12px; color: var(--primary); }
+
+        .btn {
+            background: var(--primary); color: #000; border: none; padding: 10px 16px;
+            border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;
+            transition: 0.3s; text-align: center; text-decoration: none;
+        }
+        .btn:disabled { background: #222 !important; color: #555 !important; cursor: not-allowed; border: 1px solid #333; }
+        
+        .withdraw-btn { width: 100%; padding: 16px; margin-top: 20px; font-size: 16px; }
+        
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: var(--nav-bg); border-top: 1px solid #333;
+            display: flex; justify-content: space-around; padding: 12px 0; z-index: 100;
+        }
+        .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; font-size: 10px; cursor: pointer; width: 50%; }
+        .nav-item.active { color: var(--primary); }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 999;
+        }
+        .modal { background: #222; padding: 25px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; }
+        .input-field { width: 100%; padding: 12px; background: #111; border: 1px solid #444; color: #fff; border-radius: 8px; margin: 10px 0; box-sizing: border-box;}
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div id="tab-home" class="tab-content active">
+        <h1>EasyMoney UA 🇺🇦</h1>
+        <div class="balance-card">
+            <div class="balance-title">Ваш баланс</div>
+            <div class="balance-amount"><span id="balance">0</span> ₴</div>
+        </div>
+
+        <h3 style="font-size: 16px; color: var(--gray); margin-bottom: 10px;">Задания (подписки)</h3>
+        
+        <div class="task-item">
+            <div class="task-info">
+                <span class="task-name">Канал Easy Money 🇺🇦</span><br>
+                <span class="task-reward">+25 ₴</span>
+            </div>
+            <button class="btn" id="btn1" onclick="handleTask(1, 'https://t.me/EasyMoney_channel1')">Подписаться</button>
+        </div>
+
+        <div class="task-item">
+            <div class="task-info">
+                <span class="task-name">Канал EasyMoney 🇺🇦</span><br>
+                <span class="task-reward">+25 ₴</span>
+            </div>
+            <button class="btn" id="btn2" onclick="handleTask(2, 'https://t.me/EasyMoney_channel2')">Подписаться</button>
+        </div>
+
+        <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px;">
+            <h3 style="font-size: 16px; margin-bottom: 5px;">Реферальная система</h3>
+            <p style="font-size: 12px; color: var(--gray);">+125 грн за друга. Вывод от 2500 грн.</p>
+            
+            <button class="btn" onclick="shareRef()" style="width: 100%; margin-bottom: 10px; background: #0088cc; color: white;">
+                ✈️ Пригласить друзей
+            </button>
+
+            <button class="btn" onclick="refreshData()" style="width: 100%; margin-bottom: 10px; background: #f1c40f; color: black;">
+                🔄 Проверить подписки/друзей
+            </button>
+
+            <div style="background:#111; padding:10px; border-radius:8px; border:1px dashed #444; font-size:11px; display:flex; justify-content:space-between; cursor: pointer;" onclick="copyRef()">
+                <span id="refLink">Загрузка...</span>
+                <span>📋</span>
+            </div>
+            
+            <div style="margin-top:15px; display:flex; justify-content:space-between; font-size:12px;">
+                <span>Прогресс вывода:</span>
+                <span id="friendCount">0/20</span>
+            </div>
+            <div style="background:#333; height:6px; border-radius:10px; margin-top:5px; overflow:hidden;">
+                <div id="progressBar" style="width:0%; background:var(--primary); height:100%; transition:0.5s;"></div>
+            </div>
+
+            <button class="btn withdraw-btn" id="withdrawBtn" onclick="openModal()" disabled>Нужно 2500 ₴ 🔒</button>
+        </div>
+    </div>
+
+    <div id="tab-payouts" class="tab-content">
+        <h1>Выплаты LIVE 💸</h1>
+        <div id="payoutList"></div>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('home', this)"><span>🏠</span><span>Главная</span></button>
+    <button class="nav-item" onclick="switchTab('payouts', this)"><span>💸</span><span>Выплаты</span></button>
+</div>
+
+<div class="modal-overlay" id="modal">
+    <div class="modal">
+        <h2>Вывод 2500 ₴</h2>
+        <input type="tel" class="input-field" id="cardNum" placeholder="Номер карты (16 цифр)">
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <button class="btn" style="background:transparent; border:1px solid #555; color:#fff; flex:1" onclick="closeModal()">Отмена</button>
+            <button class="btn" style="flex:1" onclick="doWithdraw()">Подтвердить</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- ПАРАМЕТРЫ ИЗ БОТА ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('user_id') || '0';
+    const balance = parseFloat(urlParams.get('balance')) || 0;
+    const friends = parseInt(urlParams.get('friends')) || 0;
+    
+    // Статусы заданий (t1=1 значит подписан на первый канал)
+    const t1 = urlParams.get('t1') === '1';
+    const t2 = urlParams.get('t2') === '1';
+
+    const botUsername = 'EasyMoneyUKRbot'; 
+    const myRefLink = `https://t.me/${botUsername}?start=${userId}`;
+    const shareText = "Получи 2500 грн на карту за простые подписки в EasyMoney 🇺🇦!";
+    const GOAL = 2500;
+
+    // Инициализация
+    document.getElementById('refLink').innerText = `t.me/${botUsername}?start=${userId}`;
+    document.getElementById('balance').innerText = balance;
+    document.getElementById('friendCount').innerText = `${friends} друзей`;
+    
+    // Обновление прогресс-бара
+    let pct = (balance / GOAL) * 100;
+    document.getElementById('progressBar').style.width = (pct > 100 ? 100 : pct) + '%';
+    
+    if(balance >= GOAL) {
+        const wb = document.getElementById('withdrawBtn');
+        wb.disabled = false;
+        wb.innerText = 'ВЫВЕСТИ ДЕНЬГИ 💳';
+    }
+
+    // Статусы кнопок заданий
+    if(t1) { 
+        document.getElementById('btn1').innerText = '✅ Готово';
+        document.getElementById('btn1').disabled = true;
+    }
+    if(t2) { 
+        document.getElementById('btn2').innerText = '✅ Готово';
+        document.getElementById('btn2').disabled = true;
+    }
+
+    function handleTask(id, url) {
+        window.open(url, '_blank');
+        alert("После подписки нажмите кнопку 'Проверить', чтобы бот начислил бонус!");
+    }
+
+    function refreshData() {
+        // В Telegram WebApp это закроет окно. Пользователь нажмет Старт и получит новый URL с деньгами.
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.close();
+        } else {
+            location.reload();
+        }
+    }
+
+    function switchTab(tabName, btnElement) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tabName).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        btnElement.classList.add('active');
+    }
+
+    function shareRef() {
+        const url = `https://t.me/share/url?url=${encodeURIComponent(myRefLink)}&text=${encodeURIComponent(shareText)}`;
+        window.open(url, '_blank');
+    }
+
+    function copyRef() {
+        navigator.clipboard.writeText(myRefLink);
+        alert('Ссылка скопирована!');
+    }
+
+    function openModal() { document.getElementById('modal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+    function doWithdraw() {
+        if(document.getElementById('cardNum').value.length < 16) return alert('Введите номер карты');
+        alert('Заявка отправлена в обработку!');
+        closeModal();
+    }
+
+    // Фейковые выплаты
+    const names = ['Александр', 'Дмитрий', 'Мария', 'Игорь', 'Елена', 'Виталий'];
+    function addFake() {
+        const list = document.getElementById('payoutList');
+        if(!list) return;
+        const name = names[Math.floor(Math.random()*names.length)] + '***';
+        const div = document.createElement('div');
+        div.style = "background:#1e1e1e; padding:15px; border-radius:12px; margin-bottom:10px; display:flex; justify-content:space-between; border-left:4px solid #00e676";
+        div.innerHTML = `<div><b>${name}</b><br><small>Выплата на карту</small></div><b style="color:#00e676">+2500 ₴</b>`;
+        list.prepend(div);
+        if(list.children.length > 8) list.removeChild(list.lastChild);
+    }
+    setInterval(addFake, 8000);
+    addFake();
+
+</script>
+</body>
+</html>
