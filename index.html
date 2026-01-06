@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EasyMoney UA</title>
+    <style>
+        :root {
+            --primary: #00e676; /* Неон-зелений */
+            --bg: #121212;
+            --card: #1e1e1e;
+            --text: #ffffff;
+            --gray: #b0b0b0;
+            --nav-bg: #1a1a1a;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding-bottom: 80px; 
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 { font-size: 22px; font-weight: 800; margin: 10px 0 20px; }
+        .header-row { display: flex; justify-content: space-between; align-items: center; }
+        .live-badge { background: #ff3d00; font-size: 10px; padding: 3px 8px; border-radius: 10px; font-weight: bold; display: flex; align-items: center; gap: 4px; }
+        .live-dot { width: 6px; height: 6px; background: #fff; border-radius: 50%; }
+
+        .balance-card {
+            background: linear-gradient(135deg, #1b5e20, #00c853);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 25px rgba(0, 200, 83, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .balance-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+        .balance-amount { font-size: 40px; font-weight: 800; margin: 5px 0; }
+
+        .task-item {
+            background: var(--card); padding: 15px; border-radius: 16px; margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid #333;
+        }
+        .task-name { font-weight: 600; font-size: 14px; }
+        .task-reward { font-size: 12px; color: var(--primary); margin-top: 4px; }
+
+        .btn {
+            background: var(--primary); color: #000; border: none; padding: 10px 16px;
+            border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer;
+        }
+        .btn:disabled { background: #333; color: #777; cursor: not-allowed; }
+        .withdraw-btn { width: 100%; padding: 16px; margin-top: 20px; font-size: 16px; }
+        
+        .payout-item {
+            background: var(--card); padding: 15px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-left: 3px solid var(--primary); margin-bottom: 10px;
+        }
+
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: var(--nav-bg); border-top: 1px solid #333;
+            display: flex; justify-content: space-around; padding: 12px 0; z-index: 100;
+        }
+        .nav-item { background: none; border: none; color: var(--gray); display: flex; flex-direction: column; align-items: center; font-size: 10px; cursor: pointer; width: 50%; }
+        .nav-item.active { color: var(--primary); }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 999;
+        }
+        .modal { background: #222; padding: 25px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; }
+        .input-field { width: 100%; padding: 12px; background: #111; border: 1px solid #444; color: #fff; border-radius: 8px; margin: 10px 0; box-sizing: border-box;}
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div id="tab-home" class="tab-content active">
+        <h1>EasyMoney UA 🇺🇦</h1>
+        <div class="balance-card">
+            <div class="balance-title">Доступно до виведення</div>
+            <div class="balance-amount"><span id="balance">0</span> ₴</div>
+        </div>
+
+        <h3 style="font-size: 16px; color: var(--gray); margin-bottom: 10px;">Завдання</h3>
+        <div class="task-item">
+            <div class="task-info">
+                <span class="task-name">🇺🇦 Канал EasyMoney 1</span><br>
+                <span class="task-reward">+25 ₴</span>
+            </div>
+            <button class="btn" id="btn1" onclick="handleTask(1)">Підписатися</button>
+        </div>
+        <div class="task-item">
+            <div class="task-info">
+                <span class="task-name">🇺🇦 Канал EasyMoney 2</span><br>
+                <span class="task-reward">+25 ₴</span>
+            </div>
+            <button class="btn" id="btn2" onclick="handleTask(2)">Підписатися</button>
+        </div>
+
+        <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px;">
+            <h3 style="font-size: 16px; margin-bottom: 5px;">Запроси друзів</h3>
+            <p style="font-size: 12px; color: var(--gray);">Нагорода: 125 грн/друг. Мінімум: 2500 грн.</p>
+            <div style="background:#111; padding:10px; border-radius:8px; border:1px dashed #444; font-size:12px; display:flex; justify-content:space-between;" onclick="copyRef()">
+                <span id="refLink">Завантаження посилання...</span>
+                <span>📋</span>
+            </div>
+            <div style="margin-top:15px; display:flex; justify-content:space-between; font-size:12px;">
+                <span>Прогрес:</span>
+                <span id="friendCount">0/20</span>
+            </div>
+            <div style="background:#333; height:6px; border-radius:10px; margin-top:5px; overflow:hidden;">
+                <div id="progressBar" style="width:0%; background:var(--primary); height:100%; transition:0.5s;"></div>
+            </div>
+            <button class="btn withdraw-btn" id="withdrawBtn" onclick="openModal()" disabled>Мін. 2500 ₴ 🔒</button>
+        </div>
+    </div>
+
+    <div id="tab-payouts" class="tab-content">
+        <div class="header-row">
+            <h1>Виплати</h1>
+            <div class="live-badge"><div class="live-dot"></div> LIVE</div>
+        </div>
+        <div class="payout-list" id="payoutList"></div>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('home', this)"><span>🏠</span><span>Головна</span></button>
+    <button class="nav-item" onclick="switchTab('payouts', this)"><span>💸</span><span>Виплати</span></button>
+</div>
+
+<div class="modal-overlay" id="modal">
+    <div class="modal">
+        <h2>Виведення коштів</h2>
+        <input type="text" class="input-field" value="2500 ₴" readonly>
+        <input type="tel" class="input-field" id="cardNum" placeholder="Номер картки">
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <button class="btn" style="background:transparent; border:1px solid #555; color:#fff; flex:1" onclick="closeModal()">Скасувати</button>
+            <button class="btn" style="flex:1" onclick="doWithdraw()">Вивести</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- ДАНІ З БОТА ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('user_id') || '0';
+    const refParent = urlParams.get('ref') || '0';
+    const botUsername = 'EasyMoneyUKRbot'; 
+
+    // --- СТАН ---
+    let balance = parseFloat(localStorage.getItem('balance')) || 0;
+    let friends = parseInt(localStorage.getItem('friends')) || 0;
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || {1: false, 2: false};
+    const GOAL = 2500;
+    const PER_FRIEND = 125;
+
+    // Встановлення реф-посилання
+    const myRefLink = `https://t.me/${botUsername}?start=${userId}`;
+    document.getElementById('refLink').innerText = `t.me/${botUsername}?start=${userId}`;
+
+    function switchTab(tabName, btnElement) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tabName).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        if(btnElement) btnElement.classList.add('active');
+    }
+
+    function handleTask(id) {
+        if(tasks[id]) return;
+        const btn = document.getElementById('btn'+id);
+        window.open(id===1 ? 'https://t.me/channel1' : 'https://t.me/channel2', '_blank');
+        btn.innerText = 'Перевірка...';
+        setTimeout(() => {
+            tasks[id] = true;
+            balance += 25;
+            saveData();
+            updateUI();
+        }, 2000);
+    }
+
+    function updateUI() {
+        document.getElementById('balance').innerText = balance;
+        document.getElementById('friendCount').innerText = `${friends}/20`;
+        
+        let pct = (balance / GOAL) * 100;
+        document.getElementById('progressBar').style.width = (pct > 100 ? 100 : pct) + '%';
+
+        const btn = document.getElementById('withdrawBtn');
+        if(tasks[1] && tasks[2] && balance >= GOAL) {
+            btn.disabled = false;
+            btn.style.background = 'var(--primary)';
+            btn.innerText = 'ВИВЕСТИ НА КАРТКУ 💳';
+        }
+
+        // Оновлення стану кнопок завдань
+        [1,2].forEach(id => {
+            const b = document.getElementById('btn'+id);
+            if(tasks[id]) {
+                b.innerText = 'Виконано';
+                b.disabled = true;
+                b.style.background = '#222';
+                b.style.color = '#777';
+            }
+        });
+    }
+
+    function saveData() {
+        localStorage.setItem('balance', balance);
+        localStorage.setItem('friends', friends);
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function copyRef() {
+        navigator.clipboard.writeText(myRefLink);
+        alert('Посилання скопійовано!');
+    }
+
+    function openModal() { document.getElementById('modal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+    function doWithdraw() {
+        if(document.getElementById('cardNum').value.length < 16) return alert('Введіть коректний номер картки');
+        alert('Заявку прийнято! Очікуйте виплату протягом 24 годин.');
+        closeModal();
+    }
+
+    // --- ФЕЙКОВІ ВИПЛАТИ ---
+    const names = ['Андрій', 'Ольга', 'Тарас', 'Іван', 'Марина', 'Олександр', 'Дмитро', 'Олена'];
+    function addFakePayout() {
+        const list = document.getElementById('payoutList');
+        const name = names[Math.floor(Math.random() * names.length)] + '***';
+        const amount = [2500, 2625, 3150, 5000][Math.floor(Math.random() * 4)];
+        const div = document.createElement('div');
+        div.className = 'payout-item';
+        div.innerHTML = `<div><b>${name}</b><br><small style="color:gray">щойно</small></div><div style="color:var(--primary);font-weight:bold">+ ${amount} ₴</div>`;
+        list.prepend(div);
+        if(list.children.length > 6) list.removeChild(list.lastChild);
+    }
+
+    setInterval(addFakePayout, 5000);
+    addFakePayout();
+    updateUI();
+</script>
+
+</body>
+</html>
